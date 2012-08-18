@@ -8,15 +8,11 @@ one:
 
   updated_at: 2009-04-11 22:09:57
 
-  old_user_id: 1
-
-  old_comment: Review 1
-
   updated_by_id: 1
 
   change_id: 1
   
-  old_status: 0
+  line: 5
   
 
   
@@ -25,222 +21,155 @@ two:
 
   project_id: 1
 
-  old_parent_id: 1
-
   created_at: 2009-04-12 22:09:57
 
   updated_at: 2009-04-12 22:09:57
 
-  old_user_id: 2
-
-  old_comment: Review 2
-
   updated_by_id: 1
 
   change_id: 1
-
-  old_status: 0
-  
+  line: 5
 
 three:
   id: 3
 
   project_id: 1
 
-  old_parent_id: 1
-
   created_at: 2009-04-13 22:09:57
 
   updated_at: 2009-04-13 22:09:57
-
-  old_user_id: 2
-
-  old_comment: Review 2
 
   updated_by_id: 1
 
   change_id: 1
 
-  old_status: 0
   action_type: diff
+  line: 5
 
 four:
   id: 4
 
   project_id: 1
 
-  old_parent_id: 1
-
   created_at: 2009-04-14 22:09:57
 
   updated_at: 2009-04-15 22:09:57
-
-  old_user_id: 3
-
-  old_comment: Review 2
 
   updated_by_id: 3
 
   change_id: 1
 
-  old_status: 1
-  action_type: diff
+  action_type: diff  
+  line: 5  
   
 five:
   id: 5
 
   project_id: 1
 
-  old_parent_id:
-
   created_at: 2009-04-14 22:09:57
 
   updated_at: 2009-04-15 22:09:57
-
-  old_user_id: 3
-
-  old_comment: Review 2
 
   updated_by_id: 3
 
   change_id: 1
 
-  old_status: 1
-  action_type: diff
+  action_type: diff  
+  line: 5
 
 six:
   id: 6
 
   project_id: 1
 
-  old_parent_id:
-
   created_at: 2009-04-14 22:09:57
 
   updated_at: 2009-04-15 22:09:57
-
-  old_user_id: 3
-
-  old_comment: Review 2
 
   updated_by_id: 3
 
   change_id: 2
 
-  old_status: 1
-  action_type: diff
+  action_type: diff 
+  line: 5
 seven:
   id: 7
 
   project_id: 1
 
-  old_parent_id:
-
   created_at: 2009-04-14 22:09:57
 
   updated_at: 2009-04-15 22:09:57
-
-  old_user_id: 3
-
-  old_comment: Review 2
 
   updated_by_id: 3
 
   change_id: 2
 
-  old_status: 0
   action_type: diff
+  line: 5
 
 eight:
   id: 8
 
   project_id: 1
 
-  old_parent_id:
-
   created_at: 2009-04-14 22:09:57
 
   updated_at: 2009-04-15 22:09:57
 
-  old_user_id: 3
-
-  old_comment: Review 2
-
-  updated_by_id: 3
-
   change_id: 2
 
-  old_status: 0
   action_type: diff
+  line: 5
 
 nine:
   id: 9
 
   project_id: 1
 
-  old_parent_id:
-
   created_at: 2009-04-14 22:09:57
 
   updated_at: 2009-04-15 22:09:57
-
-  old_user_id: 3
-
-  old_comment: Review 2
 
   updated_by_id: 3
 
   change_id: 2
 
-  old_status: 0
-
   issue_id: 1
   action_type: diff
+  line: 5
   
 ten:
   id: 10
 
   project_id: 1
 
-  old_parent_id:
-
   created_at: 2009-04-14 22:09:57
 
   updated_at: 2009-04-15 22:09:57
-
-  old_user_id: 3
-
-  old_comment: Review 10
 
   updated_by_id: 3
 
   change_id: 2
 
-  old_status: 0
-
   issue_id: 2
-  action_type: diff
+  action_type: diff  
+  line: 5
 
 eleven:
   id: 11
 
   project_id: 1
 
-  old_parent_id: 2
-
   created_at: 2009-04-12 22:09:57
 
   updated_at: 2009-04-12 22:09:57
-
-  old_user_id: 2
-
-  old_comment: Review 2
 
   updated_by_id: 1
 
   change_id: 3
 
-  old_status: 0
-
-  action_type: diff
+  action_type: diff  
+  line: 5
 

@@ -17,15 +17,16 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 -%>
 <%
-changesets = controller.get_selected_changesets
-if changesets
+
+if @changesets
   changeset_ids = ''
-  changesets.each { |changeset|
+  @changesets.each { |changeset|
     changeset_ids << changeset.revision
     changeset_ids << ','
   }
 
-  url = url_for :controller => 'code_review', :action => 'update_revisions_view', :id => project
+  repository_id = @repository.identifier_param if @repository.respond_to?("identifier_param")
+  url = url_for :controller => 'code_review', :action => 'update_revisions_view', :id => project, :repository_id => repository_id
 %>
 
   <div id="code_review_revisions"></div>

@@ -1,6 +1,6 @@
 /*
 # Code Review plugin for Redmine
-# Copyright (C) 2009-2010  Haruyuki Iida
+# Copyright (C) 2009-2012  Haruyuki Iida
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -26,6 +26,7 @@ var urlprefix = '';
 var review_form_dialog = null;
 var add_form_title = null;
 var review_dialog_title = null;
+var repository_id = null;
 
 var ReviewCount = function(total, open, progress){
     this.total = total;
@@ -51,16 +52,17 @@ function UpdateRepositoryView(title) {
     var th = new Element('th');
     th.innerHTML = title;
     header.insert(th);
-    var trs = $$('tr.changeset');
-    for (var i = 0; i < trs.length; i++) {
-        var tr = trs[i];
-        var revision = tr.down('a').getAttribute("href");
-        revision = revision.substr(revision.lastIndexOf("/") + 1);
+    var anchors = $$('tr.changeset td.id a');
+    for (var i = 0; i < anchors.length; i++) {
+        var anchor = anchors[i];
+        var revision = anchor.getAttribute("href");
+        revision = revision.substr(revision.lastIndexOf("/") + 1);        
         var review = review_counts['revision_' + revision];
         var td = new Element('td',{
             'class':'progress'
         });
-        td.innerHTML = review.progress
+        td.innerHTML = review.progress;
+        var tr = anchor.parentNode.parentNode;
         tr.insert(td);
     }
 }
@@ -118,7 +120,7 @@ function setAddReviewButton(url, change_id, image_tag, is_readonly, is_diff, att
     }
     addReviewUrl = url + '?change_id=' + change_id + '&action_type=' + action_type +
         '&rev=' + rev + '&path=' + encodeURIComponent(path) + '&rev_to=' + rev_to +
-        '&attachment_id=' + attachment_id;
+        '&attachment_id=' + attachment_id + '&repository_id=' + encodeURIComponent(repository_id);
     var num = 0;
     if (is_diff) {
         num = 1;
@@ -211,17 +213,33 @@ function setShowReviewButton(line, review_id, is_closed, file_count) {
     });
 }
 
-function popupReview(line, review_id) {
-    var target = $('show_review_' + review_id);
-    var span = $('review_' + review_id);
-
+function popupReview(review_id) {
+    var span   = $('review_'      + review_id); // span element of view review button
+    var target = $('show_review_' + review_id); // target element for popup dialog
+    // create popup dialog
     var win = showReview(showReviewUrl, review_id, target);
-  
-    win.setLocation(span.positionedOffset().top, span.positionedOffset().left + 10 + 5);
+    // position and show popup dialog
+    var pos_top  = 0;
+    var pos_left = 0;
+    var element  = span;
+    if (element.offsetParent) {
+        while (1) { // work-around for Safari
+            pos_top  = pos_top  + element.offsetTop;
+            pos_left = pos_left + element.offsetLeft;
+            if (!element.offsetParent) {
+                break;
+            }
+            element = element.offsetParent;
+        };
+    } else {
+        pos_top  = element.x;
+        pos_left = element.y;
+    }
+    win.setLocation(pos_top + 25, pos_left + 10 + 5);
     win.toFront();
     win.show();
+    // scroll to line
     span.scrollTo();
-    
 }
 
 function showReview(url, review_id, element) {

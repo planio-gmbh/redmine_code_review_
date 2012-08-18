@@ -17,7 +17,7 @@
 
 class CodeReviewController < ApplicationController
   unloadable
-  before_filter :find_project, :authorize, :find_user, :find_setting
+  before_filter :find_project, :authorize, :find_user, :find_setting, :find_repository
 
   helper :sort
   include SortHelper
@@ -64,9 +64,14 @@ class CodeReviewController < ApplicationController
     begin
       CodeReview.transaction {
         @review = CodeReview.new
-        @review.issue = Issue.new
-        @review.issue.tracker_id = @setting.tracker_id
-        @review.attributes = params[:review]
+        @review.issue = Issue.new        
+        @review.issue.safe_attributes = params[:issue] unless params[:issue].blank? 
+        if params[:issue] and params[:issue][:tracker_id]
+          @review.issue.tracker_id = params[:issue][:tracker_id].to_i
+        else
+          @review.issue.tracker_id = @setting.tracker_id
+        end
+        @review.safe_attributes = params[:review]
         @review.project_id = @project.id
         @review.issue.project_id = @project.id
 
@@ -82,9 +87,8 @@ class CodeReviewController < ApplicationController
         @issue = @review.issue
 
         @parent_candidate = get_parent_candidate(@review.rev) if  @review.rev
-
-        if request.post?
-          @review.issue.attributes = params[:issue]
+        
+        if request.post?          
           @review.issue.save!
           if @review.changeset
             @review.changeset.issues.each {|issue|
@@ -109,11 +113,12 @@ class CodeReviewController < ApplicationController
         else
           change_id = params[:change_id].to_i unless params[:change_id].blank?
           @review.change = Change.find(change_id) if change_id
-          @review.line = params[:line].to_i
+          @review.line = params[:line].to_i unless params[:line].blank? 
           if (@review.changeset and @review.changeset.user_id)
             @review.issue.assigned_to_id = @review.changeset.user_id
           end
-          if @review.changeset
+          @default_version_id = @review.issue.fixed_version.id if @review.issue.fixed_version
+          if @review.changeset and @default_version_id.blank?
             @review.changeset.issues.each {|issue|
               if issue.fixed_version
                 @default_version_id = issue.fixed_version.id
@@ -146,6 +151,7 @@ class CodeReviewController < ApplicationController
     code[:change_id] = params[:change_id].to_i unless params[:change_id].blank?
     code[:changeset_id] = params[:changeset_id].to_i unless params[:changeset_id].blank?
     code[:attachment_id] = params[:attachment_id].to_i unless params[:attachment_id].blank?
+    code[:repository_id] = @repository_id if @repository_id
 
     changeset = Changeset.find(code[:changeset_id]) if code[:changeset_id]
     if (changeset == nil and code[:change_id] != nil)
@@ -174,10 +180,10 @@ class CodeReviewController < ApplicationController
     @rev_to = params[:rev_to] unless params[:rev_to].blank?
     @path = params[:path]
     @action_type = params[:action_type]
-    changeset = @project.repository.find_changeset_by_name(@rev)
-    repository = @project.repository
-    url = repository.url
-    root_url = repository.root_url
+    changeset = @repository.find_changeset_by_name(@rev)
+
+    url = @repository.url
+    root_url = @repository.root_url
     if (url == nil || root_url == nil)
       fullpath = @path
     else
@@ -222,7 +228,10 @@ class CodeReviewController < ApplicationController
 
   def show
     @review = CodeReview.find(params[:review_id].to_i) unless params[:review_id].blank?
+    @repository = @review.repository if @review
     @assignment = CodeReviewAssignment.find(params[:assignment_id].to_i) unless params[:assignment_id].blank?
+    @repository = @assignment.repository if @assignment
+    @repository_id = @repository.identifier_param if @repository.respond_to?("identifier_param")
     @issue = @review.issue if @review
     @allowed_statuses = @review.issue.new_statuses_allowed_to(User.current) if @review
     target = @review if @review
@@ -242,7 +251,7 @@ class CodeReviewController < ApplicationController
         url << '?review_id=' + @review.id.to_s if @review
         redirect_to(url)
       else
-        url = url_for(:controller => 'repositories', :action => action_name, :id => @project) + URI.escape(path) + '?rev=' + target.revision
+        url = url_for(:controller => 'repositories', :action => action_name, :id => @project, :repository_id => @repository_id) + URI.escape(path) + '?rev=' + target.revision
         url << '&review_id=' + @review.id.to_s + rev_to if @review
         redirect_to url
       end
@@ -256,7 +265,7 @@ class CodeReviewController < ApplicationController
       @issue.lock_version = params[:issue][:lock_version]
       comment = params[:reply][:comment]
       journal = @issue.init_journal(User.current, comment)
-      @review.attributes = params[:review]
+      @review.safe_attributes = params[:review]
       @allowed_statuses = @issue.new_statuses_allowed_to(User.current)
 
       @issue.save!
@@ -281,7 +290,7 @@ class CodeReviewController < ApplicationController
         @allowed_statuses = @review.issue.new_statuses_allowed_to(User.current)
         @issue = @review.issue
         @issue.lock_version = params[:issue][:lock_version]
-        @review.attributes = params[:review]
+        @review.safe_attributes = params[:review]
         @review.updated_by_id = @user.id
         @review.save!
         @review.issue.save!
@@ -310,11 +319,11 @@ class CodeReviewController < ApplicationController
   def forward_to_revision
     path = params[:path]
     rev = params[:rev]
-    changesets = @project.repository.latest_changesets(path, rev, Setting.repository_log_display_limit.to_i)
+    changesets = @repository.latest_changesets(path, rev, Setting.repository_log_display_limit.to_i)
     change = changesets[0]
    
     identifier = change.identifier
-    redirect_to url_for(:controller => 'repositories', :action => 'entry', :id => @project) + '/' + path + '?rev=' + identifier.to_s
+    redirect_to url_for(:controller => 'repositories', :action => 'entry', :id => @project, :repository_id => @repository_id) + '/' + path + '?rev=' + identifier.to_s
 
   end
 
@@ -329,12 +338,21 @@ class CodeReviewController < ApplicationController
     changeset_ids = params[:changeset_ids].split(',') unless params[:changeset_ids].blank?
     @changesets = []
     changeset_ids.each {|id|
-      @changesets << @project.repository.find_changeset_by_name(id) unless id.blank?
+      @changesets << @repository.find_changeset_by_name(id) unless id.blank?
     }
     render :partial => 'update_revisions'
   end
   
   private
+  def find_repository
+    if params[:repository_id].present? and @project.repositories
+      @repository = @project.repositories.find_by_identifier_param(params[:repository_id])
+    else
+      @repository = @project.repository
+    end
+    @repository_id = @repository.identifier_param if @repository.respond_to?("identifier_param")
+  end
+  
   def find_project
     # @project variable must be set before calling the authorize filter
     @project = Project.find(params[:id])
@@ -350,7 +368,7 @@ class CodeReviewController < ApplicationController
   end
 
   def get_parent_candidate(revision)
-    changeset = @project.repository.find_changeset_by_name(revision)
+    changeset = @repository.find_changeset_by_name(revision)
     changeset.issues.each {|issue|
       return Issue.find(issue.parent_issue_id) if issue.parent_issue_id
     }

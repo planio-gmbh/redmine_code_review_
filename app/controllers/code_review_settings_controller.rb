@@ -27,20 +27,13 @@ class CodeReviewSettingsController < ApplicationController
     begin
       @setting = CodeReviewProjectSetting.find_or_create(@project)
 
-      @setting.attributes = params[:setting]
+      @setting.safe_attributes = params[:setting]
       @setting.updated_by = @user.id
       params[:auto_assign][:filters] = params[:auto_assign][:filters].values unless params[:auto_assign][:filters].blank?
       @setting.auto_assign_settings = params[:auto_assign].to_yaml
 
       @setting.save!
-      convert = params[:convert] unless params[:convert].blank?
-      if (convert and convert == 'true')
-        old_reviews = find_old_reviews
-        old_reviews.each {|review|
-          review.convert_to_new_data
-          review.destroy
-        }
-      end
+      
       flash[:notice] = l(:notice_successful_update)
     rescue ActiveRecord::StaleObjectError
       # Optimistic locking exception
@@ -123,8 +116,4 @@ class CodeReviewSettingsController < ApplicationController
     @user = User.current
   end
 
-  def find_old_reviews
-    CodeReview.find(:all,
-      :conditions => ['issue_id is ? and old_parent_id is ? and project_id = ?', nil, nil, @project.id])
-  end
 end

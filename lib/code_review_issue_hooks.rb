@@ -87,22 +87,25 @@ class CodeReviewIssueHooks < Redmine::Hook::ViewListener
     o = '<tr>'
     o << "<td><b>#{l(:code_review)}:</b></td>"
     o << '<td colspan="3">'
-    o << link_to("#{review.path}#{'@' + review.revision if review.revision}:line #{review.line}",
-      :controller => 'code_review', :action => 'show', :id => project, :review_id => review.id)
+    o << link_to("#{review.repository_identifier + ':' if review.repository_identifier}#{review.path}#{'@' + review.revision if review.revision}:line #{review.line}",
+      :controller => 'code_review', :action => 'show', :id => project, :review_id => review.id, :repository_id => review.repository_identifier)
     o << '</td>'
     o << '</tr>'
     return o
   end
 
   def create_assignment_info(project, assignment)
+    repository_id = assignment.repository_identifier
     o = '<tr>'
     o << "<td><b>#{l(:review_assigned_for)}:</b></td>"
     o << '<td colspan="3">'
     if assignment.path
-      o << link_to("#{assignment.path}#{'@' + assignment.revision if assignment.revision}",
-        :controller => 'code_review', :action => 'show', :id => project, :assignment_id => assignment.id)
+      o << link_to("#{repository_id + ':' if repository_id}#{assignment.path}#{'@' + assignment.revision if assignment.revision}",
+        :controller => 'code_review', :action => 'show', :id => project, :assignment_id => assignment.id, :repository_id => repository_id)
     elsif assignment.revision
-      o << l(:label_revision) + " " + link_to_revision(assignment.revision, project)
+      repo = project unless repository_id
+      repo ||= assignment.repository
+      o << l(:label_revision) + " " + link_to_revision(assignment.revision, repo)
     elsif assignment.attachment
       attachment = assignment.attachment
       o << link_to(attachment.filename, :controller => 'attachments', :action => 'show', :id => attachment.id)

@@ -35,10 +35,20 @@
     <%= hidden_field_tag(:path, @review.path) %>
     <%= hidden_field_tag(:file_count, @review.file_count) %>
     <%= hidden_field_tag(:attachment_id, @review.attachment_id) %>
+    <%= hidden_field_tag(:repository_id, @repository_id) %>
     <p>
       <label><b><%=h l(:field_subject)%>:</b></label>
       <%= f.text_field :subject, :size => 70, :required => true %>
     </p>
+
+    <% if @setting.tracker_in_review_dialog %>
+      <p>
+        <label><b><%=h l(:label_tracker) %>:</b></label>
+        <%= select :issue, :tracker_id, @project.trackers.collect {|t| [t.name, t.id]}, :required => true %>
+        <%= observe_field(:issue_tracker_id, :update => 'review-form', :controller => 'code_review',
+        :action => 'new', :submit => 'review_form', :method => 'get') %>
+      </p>
+    <% end %>
     <p>
       <label><b><%=h l(:field_parent_issue)%>:</b></label>
       <%= f.text_field :parent_id, :size => 10 %>
@@ -75,7 +85,17 @@
         <%= select :issue, :fixed_version_id, (@issue.assignable_versions.collect {|v| [v.name, v.id]}), :include_blank => true, :selected => @default_version_id %>
       </p>
     <% end %>
+
+    <%
+      @allowed_statuses = @issue.new_statuses_allowed_to(User.current)
+    -%>
+    <% if @issue.new_record? || @allowed_statuses.any? %>
+      <p><%= f.select :status_id, (@allowed_statuses.collect {|p| [p.name, p.id]}), :required => true %></p>
+    <% else %>
+      <p><label><%= l(:field_status) %></label> <%= h(@issue.status.name) %></p>
+    <% end %>
     <p>
+
       <%= submit_to_remote 'apply', l(:button_apply), :update => 'review-form',
         :url => {:controller => 'code_review', :action => 'new', :id=>@project, :line => @line},
         :method => :post, :change_id => @review.change_id, 220 => "$('review-form-frame').hide();",

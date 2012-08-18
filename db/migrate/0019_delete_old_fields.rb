@@ -1,5 +1,5 @@
 # Code Review plugin for Redmine
-# Copyright (C) 2009  Haruyuki Iida
+# Copyright (C) 2012  Haruyuki Iida
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,13 +15,19 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class AddAssignmentTracker < ActiveRecord::Migration
- 
+class DeleteOldFields < ActiveRecord::Migration
+  OLD_FIELDS=["old_parent_id", "old_user_id", "old_comment", "old_status"]
   def self.up
-    add_column(:code_review_project_settings, "assignment_tracker_id", :integer)
+    remove_column(:code_reviews, "old_parent_id")
+    remove_column(:code_reviews, "old_user_id")
+    remove_column(:code_reviews, "old_comment")
+    remove_column(:code_reviews, "old_status")
   end
 
   def self.down
-    remove_column(:code_review_project_settings, "assignment_tracker_id")
+    add_column(:code_reviews, "old_parent_id", :integer)
+    add_column(:code_reviews, "old_user_id", :integer)
+    add_column(:code_reviews, "old_comment", :text)
+    add_column(:code_reviews, "old_status", :integer)
   end
 end

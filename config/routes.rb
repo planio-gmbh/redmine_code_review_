@@ -1,5 +1,5 @@
 # Code Review plugin for Redmine
-# Copyright (C) 2009  Haruyuki Iida
+# Copyright (C) 2009-2012  Haruyuki Iida
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,13 +15,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class AddAssignmentTracker < ActiveRecord::Migration
- 
-  def self.up
-    add_column(:code_review_project_settings, "assignment_tracker_id", :integer)
-  end
-
-  def self.down
-    remove_column(:code_review_project_settings, "assignment_tracker_id")
-  end
+ActionController::Routing::Routes.draw do |map|
+  map.connect 'projects/:id/code_review/:action', :controller => 'code_review'
+  map.connect 'projects/:id/code_review_settings/:action', :controller => 'code_review_settings'
 end

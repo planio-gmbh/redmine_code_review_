@@ -1,5 +1,5 @@
 # Code Review plugin for Redmine
-# Copyright (C) 2010  Haruyuki Iida
+# Copyright (C) 2013  Haruyuki Iida
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,12 +15,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-module CodeReviewObjectDaddyHelpers
-    def CodeReview.generate_for_project!(project, attributes={})
-      attributes[:comment] = 'test comment' unless attributes[:comment]
-      attributes[:issue] = Issue.generate_for_project!({:project => project, :description => attributes[:comment], :subject => 'test'}) unless attributes[:issue]
-      attributes[:project] = project
-      review = CodeReview.generate!(attributes)
-      review
-    end
+class AddDiffAll < ActiveRecord::Migration
+  def self.up
+    add_column(:code_reviews, "diff_all", :boolean)
+  end
+
+  def self.down
+    remove_column(:code_reviews, "diff_all")
+  end
 end

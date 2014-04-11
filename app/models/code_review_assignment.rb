@@ -55,19 +55,26 @@ class CodeReviewAssignment < ActiveRecord::Base
     issue = Issue.new
     issue.subject = auto_assign.subject
     issue.subject = l(:code_review_requrest) if issue.subject.blank?
+    issue.subject = issue.subject.sub("$REV" , changeset.revision)
+    issue.subject = issue.subject.sub("$COMMENTS" , changeset.comments.split(//u)[0..60].join) unless changeset.comments.blank?
     issue.tracker_id = setting.assignment_tracker_id
     issue.project = project
     issue.author = User.find(auto_assign.author_id)
     issue.assigned_to_id = auto_assign.select_assign_to(project, changeset.user)
     issue.description = auto_assign.description
+    issue.description = issue.description.sub("$REV" , changeset.revision) unless issue.description.blank?
+    issue.description = issue.description.sub("$COMMENTS" , changeset.comments) unless changeset.comments.blank?
 
     issue.save!
       
     assignment.issue_id = issue.id
     assignment.changeset_id = changeset.id
     assignment.save!
-
+    assignment
   end
 
-  
+
+  def diff_all
+    path.blank?
+  end
 end

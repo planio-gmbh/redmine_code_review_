@@ -15,69 +15,89 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.dirname(__FILE__) + '/../test_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../test_helper')
 
 class CodeReviewAssignmentTest < ActiveSupport::TestCase
   fixtures :code_review_assignments, :issues, :issue_statuses,
     :projects, :trackers, :projects_trackers, :users, :members, :repositories,
     :enumerations
 
+  def setup
+    @assignment = CodeReviewAssignment.new
+  end
+  
   context "is_closed?" do
     should "return false if assignment issue is not closed." do
-      assignment = CodeReviewAssignment.generate
-      assert !assignment.is_closed?
+      @assignment.issue = Issue.new
+      assert !@assignment.is_closed?
     end
 
     should "return true if assignment issue is closed." do
-      assignment = CodeReviewAssignment.generate
-      assignment.issue.status = IssueStatus.find(5)
-      assert assignment.is_closed?
+      @assignment.issue = Issue.new
+      @assignment.issue.status = IssueStatus.find(5)
+      assert @assignment.is_closed?
     end
   end
 
   context "path" do
     should "return nil if file_path is nil." do
-      assignment = CodeReviewAssignment.generate(:file_path => nil)
-      assert_nil assignment.path
+      @assignment.file_path = nil
+      assert_nil @assignment.path
     end
 
     should "return aaa if file_path is aaa" do
-      assignment = CodeReviewAssignment.generate(:file_path => 'aaa')
-      assert_equal('aaa', assignment.path)
+      @assignment.file_path = 'aaa'
+      assert_equal('aaa', @assignment.path)
     end
   end
 
   context "revision" do
     should "return '123' if rev is '123'" do
-      assignment = CodeReviewAssignment.generate(:rev => '123')
-      assert_equal('123', assignment.revision)
+      @assignment.rev = '123'
+      assert_equal('123', @assignment.revision)
     end
 
     should "return '456' if rev is nil and changeset.revision is '456'" do
-      changeset = Changeset.generate(:revision => '456')
-      assignment = CodeReviewAssignment.generate(:rev => nil, :changeset => changeset)
-      assert_equal('456', assignment.revision)
+      changeset = Changeset.new
+      changeset.revision = '456'
+      @assignment.rev = nil
+      @assignment.changeset = changeset
+      assert_equal('456', @assignment.revision)
     end
 
     should "return nil if rev and chageset are nil" do
-      assignment = CodeReviewAssignment.generate(:rev => nil, :changeset => nil)
-      assert_nil(assignment.revision)
+      @assignment.rev = nil
+      @assignment.changeset = nil
+      assert_nil(@assignment.revision)
     end
   end
 
   context "create_with_changeset" do
     setup do
       @project = Project.find(1)
-      setting = CodeReviewProjectSetting.find_or_create(@project)
-      setting.auto_assign_settings.author_id = 1
-      setting.assignment_tracker_id = @project.trackers[0].id
-      setting.save!
+      @setting = CodeReviewProjectSetting.find_or_create(@project)
+      @setting.auto_assign_settings.author_id = 1
+      @setting.assignment_tracker_id = @project.trackers[0].id
+      @setting.save!
     end
     should "create new assignment" do
-      count = CodeReviewAssignment.find(:all).length
-      changeset = Changeset.generate!(:repository => @project.repository, :revision => '5000')
-      CodeReviewAssignment.create_with_changeset(changeset)
-      assert_equal(count + 1, CodeReviewAssignment.find(:all).length)
+      @setting.auto_assign_settings.description = "aaa bbb"
+      @setting.save!
+      count = CodeReviewAssignment.all.length
+      changeset = Changeset.new(:repository => @project.repository, :revision => '5000', :comments => 'foo')
+      assignment = CodeReviewAssignment.create_with_changeset(changeset)
+      assert_equal(count + 1, CodeReviewAssignment.all.length)
+      assert_equal('aaa bbb', assignment.issue.description)
+    end
+
+    should "create new assignment with keyword replacement." do
+      @setting.auto_assign_settings.subject = "123 $REV $COMMENTS 456"
+      @setting.auto_assign_settings.description = "aaa $REV $COMMENTS bbb"
+      @setting.save!
+      changeset = Changeset.new(:repository => @project.repository, :revision => '5001', :comments => 'foo')
+      assignment = CodeReviewAssignment.create_with_changeset(changeset)
+      assert_equal('aaa 5001 foo bbb', assignment.issue.description)
+      assert_equal('123 5001 foo 456', assignment.issue.subject)
     end
   end
 

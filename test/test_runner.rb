@@ -1,5 +1,5 @@
 # Code Review plugin for Redmine
-# Copyright (C) 2010  Haruyuki Iida
+# Copyright (C) 2012  Haruyuki Iida
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,12 +15,23 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-module CodeReviewObjectDaddyHelpers
-    def CodeReview.generate_for_project!(project, attributes={})
-      attributes[:comment] = 'test comment' unless attributes[:comment]
-      attributes[:issue] = Issue.generate_for_project!({:project => project, :description => attributes[:comment], :subject => 'test'}) unless attributes[:issue]
-      attributes[:project] = project
-      review = CodeReview.generate!(attributes)
-      review
-    end
-end
+
+require 'simplecov'
+require 'simplecov-rcov'
+SimpleCov.formatter = SimpleCov::Formatter::RcovFormatter
+SimpleCov.start
+
+require 'fileutils'
+testdir = File.dirname(File.expand_path(__FILE__))
+
+Dir::chdir("#{testdir}/..")
+
+require "#{testdir}/test_helper"
+
+Dir::glob("#{testdir}/fixtures/*.yml").each {|f|
+  FileUtils.copy(f, "#{testdir}/../../../test/fixtures/")
+}
+
+Dir::glob("#{testdir}/**/*test.rb").each {|f|
+  require f
+}

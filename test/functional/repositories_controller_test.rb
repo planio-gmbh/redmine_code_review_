@@ -15,7 +15,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.dirname(__FILE__) + '/../test_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../test_helper')
 require 'repositories_controller'
 
 
@@ -56,16 +56,15 @@ class RepositoriesControllerTest < ActionController::TestCase
 
   def test_revision
     @request.session[:user_id] = 1
-    change = Change.generate!
+    change = FactoryGirl.create(:change)
     changeset = change.changeset
     project = Project.find(1)
     project.repository.destroy
     project.repository = changeset.repository
-    issue = Issue.generate_for_project!(project, {:description => 'test'})
-    review = CodeReview.generate!(:change => change, :project => project, :issue => issue)
+    issue = Issue.generate!({:project => project, :description => 'test'})
+    review = FactoryGirl.create(:code_review, change: change, project: project, issue: issue)
     get :revision, :id => project.id, :rev => changeset.revision, :path => change.path.split('/')
     #assert_response :success
-    
   end
 
   def test_revisions
@@ -82,15 +81,13 @@ class RepositoriesControllerTest < ActionController::TestCase
   
   def test_diff
     @request.session[:user_id] = 1
-    #get :diff, :id => 1, :path => '/test/some/path/in/the/repo'.split('/')
-    get :diff, :id => 1, :path => ['/'], :rev => 1
+    get :diff, :id => 1, :path => '/test/some/path/in/the/repo'.split('/'), :rev => 2
     #assert_response :success
-
   end
 
   def test_entry
     @request.session[:user_id] = 1
-    get :entry, :id => 1, :path => ['/']
+    get :entry, :id => 1, :path => 'test/some/path/in/the/repo'.split('/'), :rev => 2
     assert_response :success
   end
 end

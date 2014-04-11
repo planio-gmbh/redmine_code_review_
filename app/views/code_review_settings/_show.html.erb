@@ -1,6 +1,6 @@
 <%
 # Code Review plugin for Redmine
-# Copyright (C) 2010  Haruyuki Iida
+# Copyright (C) 2010-2012  Haruyuki Iida
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,33 +18,36 @@
 -%>
 <div id="code_review_settings">
   <script type="text/javascript">
-  function setAutoAssignSettingFormEnable(flag) {
-    var form = $('cr_auto_assign_settings');
+  function setAutoAssignSettingFormEnable() {
+    var form = $('#cr_auto_assign_settings');
+    var flag = $('#auto_assign_enabled').is(':checked');
     if (flag) {
-      new Effect.BlindDown(form);
+      form.show('blind');
     }
     else {
-      new Effect.BlindUp(form);
+      form.hide('blind');
     }
   }
 
-  function setAutoAssignSettingFiltersEnable(flag) {
-    var form = $('auto_assignment_filter_form');
+  function setAutoAssignSettingFiltersEnable() {
+    var form = $('#auto_assignment_filter_form');
+    var flag = $('#auto_assign_filter_enabled').is(':checked');
     if (flag) {
-      new Effect.BlindDown(form);
+      form.show('blind');
     }
     else {
-      new Effect.BlindUp(form);
+      form.hide('blind');
     }
   }
 
   function is_valid_expression(field) {
-    if (field.value == '') {
+    var text = field[0].value;
+    if (text == '') {
       return false;
     }
 
     try {
-      new RegExp(field.value);
+      new RegExp(text);
     }
     catch (e) {
       alert(e);
@@ -53,13 +56,32 @@
 
     return true;
   }
+  
+  function add_assign_filter() {
+    if (!is_valid_expression($('#auto_assign_add_filter_expression'))) {
+      return false;
+    }
+    var url = '<%=url_for(:controller => 'code_review_settings', :action => 'add_filter', :id => @project) %>';
+    var args = $('#code_review_form').serialize2json();
+    $('#auto_assignment_filters').load(url, args);
+  }
+  
+  function update_assign_filter(num) {
+    if (!is_valid_expression($('#auto_assign_edit_filter_' + num + '_expression'))) {
+      return false;
+    }
+    var url = '<%=url_for(:controller => 'code_review_settings', :action => 'edit_filter', :id => @project) %>';
+    var args = $('#code_review_form').serialize2json();
+    args['num'] = num;
+    $('#auto_assignment_filters').load(url, args);
+  }
 </script>
   
   <%
   @code_review_setting = CodeReviewProjectSetting.find_or_create(@project)
 %>
 
-  <% labelled_tabular_form_for :setting, @code_review_setting,
+  <%= labelled_form_for :setting, @code_review_setting,
     :url => {:controller => 'code_review_settings',
     :action => 'update', :id => @project, :tab => 'code_review',
     :partial => 'code_review_settings/update',
@@ -99,13 +121,15 @@
         @auto_assign.subject = l(:code_review_requrest) if @auto_assign.subject.blank?
       -%>
         <label><%=h l(:label_auto_assign_settings)%></label>
-        <%= check_box_tag "auto_assign[enabled]", true, @auto_assign.enabled? %><%=h l(:button_activate)%>
+        <%= check_box_tag "auto_assign[enabled]", true, @auto_assign.enabled?, :onchange => 'setAutoAssignSettingFormEnable();'%><%=h l(:button_activate)%>
       </p>
       <div id="cr_auto_assign_settings" style="display: <%=  @auto_assign.enabled? ? 'true' : 'none'%>;">
         <p>
           <label><%=h l(:field_author)%></label>
           <%= select :auto_assign, :author_id,
-            (@project.members.collect {|m| [m.user.name, m.user.id]}), :selected => @auto_assign.author_id, :required => true %>
+            (@project.users.collect {|user|
+              [user.name, user.id]
+            }), :selected => @auto_assign.author_id, :required => true %>
         </p>
         <p>
           <label><%=h l(:label_candidates_of_reviewer)%></label>
@@ -137,5 +161,3 @@
   <% end %>
 </div>
 <%= wikitoolbar_for 'auto_assign_description' %>
-
-<%= observe_field 'auto_assign_enabled', {:function => "setAutoAssignSettingFormEnable(value);"} %>

@@ -1,5 +1,5 @@
 # Code Review plugin for Redmine
-# Copyright (C) 2009-2010  Haruyuki Iida
+# Copyright (C) 2009-2012  Haruyuki Iida
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-require File.dirname(__FILE__) + '/../test_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../test_helper')
 
 class CodeReviewControllerTest < ActionController::TestCase
   fixtures :code_reviews, :projects, :users, :repositories,
@@ -91,7 +91,7 @@ class CodeReviewControllerTest < ActionController::TestCase
       project = Project.find(1)
       change = Change.find(3)
       changeset = change.changeset
-      issue = Issue.generate_for_project!(project)
+      issue = Issue.generate!(:project => project)
       changeset.issues << issue
       changeset.save
       count = CodeReview.find(:all).length
@@ -107,7 +107,7 @@ class CodeReviewControllerTest < ActionController::TestCase
       }
       post :new, :id => 1, :review => {:line => 1, :change_id => 1,
         :comment => 'aaa', :subject => 'bbb'}, :action_type => 'diff'
-      assert_response 220
+      assert_response 200
     end
     
     should "save safe_attributes" do
@@ -115,7 +115,7 @@ class CodeReviewControllerTest < ActionController::TestCase
       project = Project.find(1)
       change = Change.find(3)
       changeset = change.changeset
-      issue = Issue.generate_for_project!(project)
+      issue = Issue.generate!(:project => project)
       changeset.issues << issue
       changeset.save
       count = CodeReview.find(:all).length
@@ -136,8 +136,8 @@ class CodeReviewControllerTest < ActionController::TestCase
     should "create review for attachment" do
       @request.session[:user_id] = 1
       project = Project.find(1)
-      issue = Issue.generate_for_project!(project)
-      attachment = Attachment.generate!(:container => issue)
+      issue = Issue.generate!(:project => project)
+      attachment = FactoryGirl.create(:attachment, container: issue)
       count = CodeReview.find(:all).length
       post :new, :id => 1, :review => {:line => 1, :comment => 'aaa',
         :subject => 'bbb', :attachment_id => attachment.id}, :action_type => 'diff'
@@ -154,10 +154,25 @@ class CodeReviewControllerTest < ActionController::TestCase
     #assert_template '_show'
   end
 
+  context "show" do
+    should "be success with review_id" do
+      @request.session[:user_id] = 1
+      get :show, :id => 1, :review_id => 9
+      assert_response 302
+      #assert_template '_show'
+    end
+    should "be success with assignment_id" do
+      @request.session[:user_id] = 1
+      get :show, :id => 1, :assignment_id => 1
+      assert_response 302
+      #assert_template '_show'
+    end
+  end
+
   def test_destroy
     project = Project.find(1)
-    issue = Issue.generate_for_project!(project)
-    review = CodeReview.generate_for_project!(project)
+    issue = Issue.generate!(:project => project)
+    review = FactoryGirl.create(:code_review, project: project)
     count = CodeReview.find(:all).length
     @request.session[:user_id] = 1
     get :destroy, :id => 1, :review_id => review.id

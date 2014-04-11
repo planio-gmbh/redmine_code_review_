@@ -11,7 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-require File.dirname(__FILE__) + '/../test_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../test_helper')
 require 'projects_controller'
 
 # Re-raise errors caught by the controller.
@@ -71,7 +71,7 @@ class ProjectsControllerTest < ActionController::TestCase
 
         context "and module" do
           setup do
-            EnabledModule.generate! :project_id => 1, :name => 'code_review'
+            FactoryGirl.create(:enabled_module, project_id: 1, name: 'code_review')
           end
 
           should "not exist tag id get" do
@@ -139,7 +139,7 @@ class ProjectsControllerTest < ActionController::TestCase
 
         context "and module" do
           setup do
-            EnabledModule.generate! :project_id => 1, :name => 'code_review'
+            FactoryGirl.create(:enabled_module, project_id: 1, name: 'code_review')
           end
 
           should "not exist tag id get" do
@@ -218,7 +218,7 @@ class ProjectsControllerTest < ActionController::TestCase
 
         context "and module" do
           setup do
-            EnabledModule.generate! :project_id => 1, :name => 'code_review'
+            FactoryGirl.create(:enabled_module, project_id: 1, name: 'code_review')
           end
 
           should "not exist tag id get" do
@@ -297,7 +297,7 @@ class ProjectsControllerTest < ActionController::TestCase
 
         context "and module" do
           setup do
-            EnabledModule.generate! :project_id => 1, :name => 'code_review'
+            FactoryGirl.create(:enabled_module, project_id: 1, name: 'code_review')
           end
 
           should "exist tag id get" do

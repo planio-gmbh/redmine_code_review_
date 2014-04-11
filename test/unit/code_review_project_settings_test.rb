@@ -1,5 +1,5 @@
 # Code Review plugin for Redmine
-# Copyright (C) 2010-2011  Haruyuki Iida
+# Copyright (C) 2010-2012  Haruyuki Iida
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-require File.dirname(__FILE__) + '/../test_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../test_helper')
 
 class CodeReviewProjectSettingsTest < ActiveSupport::TestCase
   fixtures :code_review_project_settings, :projects, :users, :trackers
@@ -43,7 +43,8 @@ class CodeReviewProjectSettingsTest < ActiveSupport::TestCase
     end
 
     should "be saved if auto_assign is setted." do
-      setting = CodeReviewProjectSetting.generate!(:project_id => 1, :tracker_id => 1)
+      project = Project.find(1)
+      setting = FactoryGirl.create(:code_review_project_setting, project: project)
       id = setting.id
       assert !setting.auto_assign_settings.enabled?
       setting.auto_assign_settings.enabled = true

@@ -1,5 +1,5 @@
 # Code Review plugin for Redmine
-# Copyright (C) 2009-2012  Haruyuki Iida
+# Copyright (C) 2009-2013  Haruyuki Iida
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 require 'redmine'
 begin
-require 'config/initializers/session_store.rb'
+  require 'config/initializers/session_store.rb'
 rescue LoadError
 end
 require 'gravatar'
@@ -28,12 +28,7 @@ require 'code_review_issue_hooks'
 require 'code_review_projects_helper_patch'
 require 'code_review_attachment_patch'
 
-require 'code_review_project_setting'
-
-require 'dispatcher'
-Dispatcher.to_prepare :redmine_code_review do
-  # Guards against including the module multiple time (like in tests)
-  # and registering multiple callbacks
+Rails.configuration.to_prepare do
   unless Change.included_modules.include? CodeReviewChangePatch
     Change.send(:include, CodeReviewChangePatch)
   end
@@ -53,15 +48,17 @@ Dispatcher.to_prepare :redmine_code_review do
   unless Attachment.included_modules.include? CodeReviewAttachmentPatch
     Attachment.send(:include, CodeReviewAttachmentPatch)
   end
+
 end
 
 Redmine::Plugin.register :redmine_code_review do
   name 'Redmine Code Review plugin'
   author 'Haruyuki Iida'
+  author_url 'http://twitter.com/haru_iida'
   url "http://www.r-labs.org/projects/show/codereview" if respond_to?(:url)
   description 'This is a Code Review plugin for Redmine'
-  version '0.4.8'
-  requires_redmine :version_or_higher => '1.4.0'
+  version '0.6.3'
+  requires_redmine :version_or_higher => '2.1.0'
 
   project_module :code_review do
     permission :view_code_review, {:code_review => [:update_diff_view, :update_attachment_view, :update_revisions_view, :index, :show]}
@@ -75,9 +72,9 @@ Redmine::Plugin.register :redmine_code_review do
 
   menu :project_menu, :code_review, { :controller => 'code_review', :action => 'index' }, :caption => :code_reviews,
     :if => Proc.new{|project|
-                  setting = CodeReviewProjectSetting.find_or_create(project)
-                  project.repository != nil  and setting and !setting.hide_code_review_tab
-             }, :after => :repository
+    setting = CodeReviewProjectSetting.find_or_create(project)
+    project.repository != nil  and setting and !setting.hide_code_review_tab
+  }, :after => :repository
 
   
   Redmine::WikiFormatting::Macros.register do

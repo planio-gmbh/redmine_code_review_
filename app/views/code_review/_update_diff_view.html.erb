@@ -32,15 +32,17 @@
 <div id="code-review-assign-link" style="text-align: right;">
   <%
   change_id = ''
-  change_id = @change.id if @change
-  assignments = @change.code_review_assignments if @change
-  attachment_id = @attachment.id if @attachment
-  assignments = @attachment.code_review_assignments if @attachment
+  if @change
+    assignments = @change.code_review_assignments
+  end
+  if @attachment
+    assignments = @attachment.code_review_assignments
+  end
   escaped_path = @path.gsub("'"){"\\'"} if @path
   -%>
 
   <%- if User.current.allowed_to?(:assign_code_review, @project) -%>
-  <%= raw show_assignments assignments, @project, {:action_type => @action_type, :rev => @rev, :rev_to => @rev_to, :path => @path, :change_id => change_id, :attachment_id => attachment_id} -%>
+  <%= raw show_assignments assignments, @project, {:action_type => @action_type, :rev => @rev, :rev_to => @rev_to, :path => @path, :change_id => @change.try(:id), :attachment_id => @attachment.try(:id)} -%>
   <%- end -%>
 </div>
 
@@ -62,7 +64,7 @@
   rev_to = '<%= @rev_to %>';
   path = '<%= escaped_path -%>';
 
-  setAddReviewButton(addReviewUrl, '<%= @change.id if @change %>', '<%= image_tag('edit.png', :alt => l(:label_add_review), :title => l(:label_add_review)) %>', is_readonly, is_diff, '<%= @attachment_id%>' );
+  setAddReviewButton(addReviewUrl, '<%= @change.try :id %>', '<%= image_tag('edit.png', :alt => l(:label_add_review), :title => l(:label_add_review)) %>', is_readonly, is_diff, '<%= @attachment.try :id %>' );
 
   showReviewUrl = '<%= url_for :controller => 'code_review', :action => 'show', :id=>@project %>';
   showReviewImageTag = '<%= image_tag('review.png', :plugin => 'redmine_code_review', :alt => l(:label_show_review), :title => l(:label_show_review)) %>';

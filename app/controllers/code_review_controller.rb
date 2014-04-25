@@ -309,22 +309,18 @@ class CodeReviewController < ApplicationController
         lang = current_language
         Mailer.deliver_issue_edit(journal) if Setting.notified_events.include?('issue_updated')
         set_language lang if respond_to? 'set_language'
-        render :partial => 'show'
       }
     rescue ActiveRecord::StaleObjectError
       # Optimistic locking exception
       @error = l(:notice_locking_conflict)
-      render :partial => 'show'
-    rescue
-      render :partial => 'show'
     end
+    render :partial => 'show'
   end
 
 
   def destroy
     @review = CodeReview.find(params[:review_id].to_i)
     @review.issue.destroy if @review
-    render :text => 'delete success.'
   end
 
   def forward_to_revision
